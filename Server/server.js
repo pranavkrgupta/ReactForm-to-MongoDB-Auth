@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // MongoDB connection URL
-const mongoURI = '<your mongoURI>';
+const mongoURI = 'mongodb+srv://pranavkumar2998:qpwoeirutyalskdjfhgzmxncbv@freecluster1.iwwpgx6.mongodb.net/feedbackdb?retryWrites=true&w=majority';
 
 // Connect to MongoDB
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -29,7 +29,7 @@ const feedbackSchema = new mongoose.Schema({
     qualityRating: Number,
     recommendRating: Number,
     suggestions: String
-});
+}, { versionKey: false });
 
 // Feedback Model
 const Feedback = mongoose.model('Feedback', feedbackSchema);
