@@ -68,7 +68,7 @@ app.post('/api/signup', async(req, res) => {
             email, 
             password: hashedPassword,
         });
-        
+
         await newUser.save();
         res.status(201).json({message: `User Registered Successfully`});
     } catch (error) {
@@ -80,14 +80,40 @@ app.post('/api/signup', async(req, res) => {
 app.post('/api/signin', async(req, res) => {
     try{
         const {email, password} = req.body;
+
+        //Check if user exists
         const user = await User.findOne({ email });
         if(!user){
             return res.status(400).json({ message: 'Invalid credentials' });
         }
-        if(user.password === password)
-            return res.status(201).json({ message: 'Signin successful' });
-        else
-            return res.status(400).json({ message: 'Invalid credentials' });
+
+        //Compare password
+        // if(user.password === password)
+        //     return res.status(201).json({ message: 'Signin successful' });
+        // else
+        //     return res.status(400).json({ message: 'Invalid credentials' });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if(!isMatch){
+            return res.status(400).json({message: 'Invalid Credentials'});
+        }
+
+        //Generate JWT
+        const payload = {
+            user: {
+                id: user.id
+            }
+        }
+
+        jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            {expiresIn: '1h'},
+            (err, token) => {
+                if(err) throw err;
+                req.json({token});
+            }
+        );
     }
     catch(error){
         console.error('Signin error:', error);
