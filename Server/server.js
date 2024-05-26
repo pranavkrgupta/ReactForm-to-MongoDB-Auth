@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -11,11 +12,13 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // MongoDB connection URL
-const mongoURI = ' ';
+const mongoURI = process.env.mongoURI;
 
 // Connect to MongoDB
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
+
 const connection = mongoose.connection;
+
 connection.once('open', () => {
     console.log('MongoDB database connection established successfully');
 });
@@ -33,6 +36,47 @@ const feedbackSchema = new mongoose.Schema({
 
 // Feedback Model
 const Feedback = mongoose.model('Feedback', feedbackSchema);
+
+
+const userSchema = new mongoose.Schema({
+    name: String,
+    email: String,
+    password: String
+}, {versionKey: false});
+
+const User = mongoose.model('User', userSchema);
+
+app.post('/api/signup', async(req, res) => {
+    try {
+        const {name, email, password} = req.body;
+        const newUser = new User({
+            name, email, password
+        });
+        await newUser.save();
+        res.status(201).json({message: `User Registered Successfully`});
+    } catch (error) {
+        console.error("Error Registering User", error);
+        res.status(500).json({ error: 'An error occurred while Registering User.' });
+    }
+})
+
+app.post('/api/signin', async(req, res) => {
+    try{
+        const {email, password} = req.body;
+        const user = await User.findOne({ email });
+        if(!user){
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+        if(user.password === password)
+            return res.status(201).json({ message: 'Signin successful' });
+        else
+            return res.status(400).json({ message: 'Invalid credentials' });
+    }
+    catch(error){
+        console.error('Signin error:', error);
+        res.status(500).json({ message: 'Signin failed' });
+    }
+})
 
 // API endpoint to handle POST requests for feedback data
 app.post('/api/feedback', async (req, res) => {

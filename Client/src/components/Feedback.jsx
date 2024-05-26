@@ -76,7 +76,7 @@ const Feedback = () => {
     return (
         <>
             {handleFeedback.showForm && (
-                <section className="bg-light min-vh-100 d-flex align-items-center justify-content-center">
+                <section className="bg-light py-5 min-vh-100 d-flex align-items-center justify-content-center">
                     <div className="container">
                         <div className="row justify-content-center">
                             <div className="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 col-xxl-4">
