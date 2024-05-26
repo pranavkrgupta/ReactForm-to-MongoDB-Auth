@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = 5000;
+const secretKey = process.env.JWT_SECRET;
 
 // Middleware
 app.use(bodyParser.json());
@@ -44,18 +45,18 @@ const userSchema = new mongoose.Schema({
     name: String,
     email: String,
     password: String
-}, {versionKey: false});
+}, { versionKey: false });
 
 const User = mongoose.model('User', userSchema);
 
-app.post('/api/signup', async(req, res) => {
+app.post('/api/signup', async (req, res) => {
     try {
-        const {name, email, password} = req.body;
+        const { name, email, password } = req.body;
 
         //Check if user already exists
-        const existingUser = await User.findOne({email});
-        if(existingUser){
-            return res.status(400).json({message: 'User already exists'});
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User already exists' });
         }
 
         // Hash the password
@@ -64,68 +65,64 @@ app.post('/api/signup', async(req, res) => {
 
         //Create new user
         const newUser = new User({
-            name, 
-            email, 
+            name,
+            email,
             password: hashedPassword,
         });
 
         await newUser.save();
-        res.status(201).json({message: `User Registered Successfully`});
+        res.status(201).json({ message: `User Registered Successfully` });
     } catch (error) {
         console.error("Error Registering User", error);
         res.status(500).json({ error: 'An error occurred while Registering User.' });
     }
 })
 
-app.post('/api/signin', async(req, res) => {
-    try{
-        const {email, password} = req.body;
+app.post('/api/signin', async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-        //Check if user exists
+        // Check if user exists
         const user = await User.findOne({ email });
-        if(!user){
+        if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
-
-        //Compare password
-        // if(user.password === password)
-        //     return res.status(201).json({ message: 'Signin successful' });
-        // else
-        //     return res.status(400).json({ message: 'Invalid credentials' });
-
         const isMatch = await bcrypt.compare(password, user.password);
-        if(!isMatch){
-            return res.status(400).json({message: 'Invalid Credentials'});
-        }
 
-        //Generate JWT
-        const payload = {
-            user: {
-                id: user.id
-            }
+        if (isMatch) {
+            const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET);
+            res.status(201).json({ token });
+        } else {
+            return res.status(400).json({ message: 'Invalid Credentials' });
         }
-
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            {expiresIn: '1h'},
-            (err, token) => {
-                if(err) throw err;
-                req.json({token});
-            }
-        );
-    }
-    catch(error){
+    } catch (error) {
         console.error('Signin error:', error);
         res.status(500).json({ message: 'Signin failed' });
     }
-})
+});
+
+function auth(req, res, next) {
+    const token = req.headers['authorization'];
+    if (typeof token !== 'undefined') {
+        jwt.verify(token.split(' ')[1], secretKey, (err, authData) => {
+            if (err) {
+                res.sendStatus(403);
+            } else {
+                req.authData = authData;
+                next();
+            }
+        });
+    } else {
+        res.sendStatus(401);
+    }
+};
+
 
 // API endpoint to handle POST requests for feedback data
-app.post('/api/feedback', async (req, res) => {
+app.post('/api/feedback', auth, async (req, res) => {
     try {
         const { name, email, firstVisit, found, qualityRating, recommendRating, suggestions } = req.body;
-        
+
         // Create a new feedback document
         const newFeedback = new Feedback({
             name,
@@ -139,7 +136,7 @@ app.post('/api/feedback', async (req, res) => {
 
         // Save the feedback to MongoDB
         await newFeedback.save();
-        
+
         res.status(201).json({ message: 'Feedback received successfully!' });
     } catch (error) {
         console.error('Error saving feedback:', error);

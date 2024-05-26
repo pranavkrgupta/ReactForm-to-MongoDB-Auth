@@ -44,7 +44,12 @@ const Feedback = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:5000/api/feedback', formData);
+            const token = localStorage.getItem('token');
+            const response = await axios.post('http://localhost:5000/api/feedback', formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}` // Include the token in the Authorization header
+                }
+            });
             console.log(response.data); // Assuming your backend responds with data
 
             setHandleFeedback({

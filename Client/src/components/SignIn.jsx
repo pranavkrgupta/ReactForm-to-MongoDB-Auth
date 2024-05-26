@@ -20,8 +20,12 @@ const SignIn = () => {
         e.preventDefault();
         try {
             const res = await axios.post('http://localhost:5000/api/signin', formData);
+            
+
             if(res.status == 201){
                 // Redirect to Homepage or show success message
+                const { token } = res.data;
+                localStorage.setItem('token', token);
                 window.location.href = '/feedback';
             }
             else{
