@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // MongoDB connection URL
-const mongoURI = 'mongodb+srv://pranavkumar2998:qpwoeirutyalskdjfhgzmxncbv@freecluster1.iwwpgx6.mongodb.net/feedbackdb?retryWrites=true&w=majority';
+const mongoURI = ' ';
 
 // Connect to MongoDB
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
